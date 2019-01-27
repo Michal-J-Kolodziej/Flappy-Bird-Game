@@ -1,11 +1,20 @@
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
+const gameButton = document.querySelector('div.gameButton');
+const gameOver = document.querySelector('div.gameOver');
+const gameOverP = document.querySelector('div.gameOver p');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 const scaleCanvas = () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    bird.setSize(Bird.getParams());
+    try {
+        bird.setSize(Bird.getParams());
+    }
+    catch{
+
+    }
+
 }
 
 window.addEventListener('resize', scaleCanvas);
@@ -21,7 +30,9 @@ class Bird {
         this.falling = true;
         this.timeoutIndex;
 
-        this.flying = true;
+        this.points = 0;
+
+        this.flying = true; //If bird hit the ground or pillar this value will be changed to false, and it will end the game
 
         this.changeDirection = (e) => {
             if (e !== undefined) {
@@ -36,14 +47,21 @@ class Bird {
                 this.timeoutIndex = setTimeout(this.changeDirection, 220)
             }
         }
+
+        //Adding 0.5 point per pillar. 2 pillars in one column, so after all it's adding 1 point
+        this.addPoint = () => {
+            this.points += 0.5;
+        }
+
+        //If pillar detects hit with bird this function is executed
+        this.hit = () => {
+            this.flying = false;
+        }
     }
 
     draw() { //drawing bird (rectangle)
-        c.fillStyle = 'grey';
+        c.fillStyle = '#FF5E35';
         c.fillRect(this.x, this.y, this.w, this.h);
-
-
-
     }
 
     update() { //updating birds position
@@ -75,7 +93,7 @@ class Bird {
         const size = 5;
         const birdW = (canvasH / 100) * size;
         const birdH = (canvasH / 100) * size;
-        const x = (canvasW / 100) * 5;
+        const x = (canvasW / 100) * 25;
         const y = ((canvasH / 100) * 50) - (birdH / 2);
         const v = 5;
 
@@ -92,85 +110,167 @@ class Bird {
 }
 
 class Pillar {
-    constructor(x, y, w, h, bird) {
+    constructor(x, y, w, h, bird, place) {
         this.x = x; //x position
         this.y = y; //y position
         this.w = w; //width
         this.h = h; //height
+        this.place = place; //Determinating if it's top or bottom pillar
 
-        this.bird = bird; //bird obj reference
+        this.color = '#5E1742'
+
+        this.bird = bird; //Bird obj reference
+        this.pointAdded = false; //Thanks to this flag bird.addPoint function will be executed only once
     }
 
     draw() {
-        c.fillStyle = 'grey';
+        c.fillStyle = this.color;
         c.fillRect(this.x, this.y, this.w, this.h);
     }
 
     update() {
         this.x -= Bird.getParams().v;
 
+        //Checking if bird passed the pillar
+        if (this.bird.x > this.x + this.w && !this.pointAdded) {
+            this.bird.addPoint();
+            this.pointAdded = true;
+        }
+
+        //Checking if bird has hitted the pillar
+        if (this.place === 'top') {
+            if (this.bird.x + this.bird.w >= this.x && this.bird.x <= this.x + this.w && this.bird.y <= this.h) {
+                this.bird.hit();
+                this.color = '#330136';
+            }
+        } else if (this.place === 'bottom') {
+            if (this.bird.x + this.bird.w >= this.x && this.bird.x <= this.x + this.w && this.bird.y + this.bird.h >= this.y) {
+                this.bird.hit();
+                this.color = '#330136';
+            }
+        }
+
         this.draw();
     }
 }
 
 
-const bird = new Bird(Bird.getParams());
+// let bird = new Bird(Bird.getParams());
 
-let pillarArray = [];
-let nextPillarOffset = 0;
+let pillarArray = []; //Array of all pillars 
+let nextPillarOffset = 0; //Distance between following gaps chosen randomly in createPillars function
 
 const createPillars = () => {
 
-    const gapHeight = 25;
+    const gapHeight = 20;
 
-    nextPillarOffset = Math.floor(Math.random() * (gapHeight * 2.5) - gapHeight); //Drawing a number between 0 and gapHeight to determinate next gaps position
-
-
-    const pillarHeight = (canvas.height / 100) * ((100 - gapHeight) / 2);
-    const topPillarY = 0 - (canvas.height / 100) * nextPillarOffset;
-    const bottomPillarY = canvas.height - (canvas.height / 100) * ((100 - (gapHeight - nextPillarOffset)) / 2);
+    const nextPillarOffset = Math.floor(Math.random() * (gapHeight * 3) - gapHeight); //Drawing a number between 0 and gapHeight to determinate next gaps position
 
 
-    pillarArray.push(new Pillar(canvas.width, topPillarY, (canvas.width / 100) * 10, pillarHeight, bird)); //top pillar
-    pillarArray.push(new Pillar(canvas.width, bottomPillarY, (canvas.width / 100) * 10, pillarHeight + ((canvas.height / 100) * gapHeight), bird)); //bottom pillar
+
+    const topPillarHeight = (canvas.height / 100) * ((100 - gapHeight - nextPillarOffset) / 2);
+
+    //Checking if top pillar isn't too small or too big
+    if (topPillarHeight < 10)
+        topPillarHeight = 10;
+    else if (topPillarHeight > (canvas.height - (canvas.height / 100) * gapHeight) - 10)
+        topPillarHeight = (canvas.height - (canvas.height / 100) * gapHeight) - 10;
+
+    const bottomPillarHeight = canvas.height - ((canvas.height / 100) * gapHeight) - topPillarHeight;
+    const topPillarY = 0;
+    const bottomPillarY = topPillarHeight + (canvas.height / 100) * gapHeight;
+
+
+    pillarArray.push(new Pillar(canvas.width, topPillarY, (canvas.width / 100) * 10, topPillarHeight, bird, 'top')); //Creating top pillar
+    pillarArray.push(new Pillar(canvas.width, bottomPillarY, (canvas.width / 100) * 10, bottomPillarHeight, bird, 'bottom')); //Creating bottom pillar
 }
 
-let createPillarsInterval = setInterval(createPillars, 1500);
 
 /*
     TODO:
-    1. Ustalic dlaczego luki pomiędzy pilarami maja różną wysokość
-    2. Zabezpieczyć się przed sytuacja gdy górna kolumna nie sięga do górnej krawędzi
-    3. Zabezpieczyć się przed sytuacją gdy luka pomiędzy kolumnami wyjdzie poza planszę
+    1. Przycisk reset
 */
-
+const writeOnTheCenter = (text) => {
+    const fontSize = (canvas.width / 100) * 30;
+    c.font = `${fontSize}px Arial`;
+    c.textAlign = 'center';
+    c.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    c.fillText(text, canvas.width / 2, canvas.height / 2 + fontSize / 4);
+}
+let createPillarsInterval;
+let countdownInterval;
+let countdownText = 3;
 
 const animate = () => {
+    if (createPillarsInterval === undefined) {
+        createPillarsInterval = setInterval(createPillars, 1500);
+        clearInterval(countdownInterval);
+    }
+
     if (bird.flying)
         requestAnimationFrame(animate);
     else {
-        document.querySelector('div.gameOver').classList.remove('hidden');
+        gameOver.classList.remove('hidden');
         clearInterval(createPillarsInterval);
+        c.clearRect(0, 0, innerWidth, innerHeight);
+        writeOnTheCenter(`${Math.floor(bird.points)}`);
+        gameButton.textContent = 'Play again';
+        gameOverP.textContent = 'Game Over';
+        gameButton.classList.remove('hidden');
+        return;
     }
-
 
     c.clearRect(0, 0, innerWidth, innerHeight);
 
+    writeOnTheCenter(`${Math.floor(bird.points)}`);
     bird.update();
     pillarArray.forEach((pillar, index) => {
         pillar.update();
-        if (pillar.x < -canvas.width) {
+        if (pillar.x < -canvas.width * 2) {
             pillarArray.splice(index, 1);
         }
-
-    })
-
+    });
 }
-
 
 document.addEventListener('keydown', (e) => {
     if (e.keyCode === 32) {
         return bird.changeDirection(e, false);
     }
 });
-animate();
+document.addEventListener('touchstart', (e) => {
+    try {
+        return bird.changeDirection(e, false);
+    }
+    catch {
+
+    }
+
+});
+
+const startGame = () => {
+    gameButton.classList.add('hidden');
+    gameOver.classList.add('hidden');
+
+    countdownInterval = setInterval(() => {
+        c.clearRect(0, 0, innerWidth, innerHeight);
+        bird.draw();
+        writeOnTheCenter(countdownText);
+        countdownText -= 1;
+        if (countdownText === 0) {
+            setTimeout(() => {
+                countdownText = 3;
+            }, 1000);
+        }
+    }, 1000);
+    setTimeout(animate, 4900);
+
+    bird = new Bird(Bird.getParams());
+
+    pillarArray = [];
+    nextPillarOffset = 0;
+    createPillarsInterval = undefined;
+}
+
+gameButton.addEventListener('click', () => {
+    startGame();
+});

@@ -11,12 +11,12 @@ body{
 }
 
 canvas {
-    /* background-color: #F00; */
+    background-color: #962E40;
 }
 
 div.gameOver {
     position: absolute;
-    top: 50%;
+    top: 15%;
     left: 50%;
     text-align: center;
     transform: translate(-50%, -50%);
@@ -26,9 +26,28 @@ div.gameOver {
 
 div.gameOver p {
     line-height: 100%;
-    font-size: 50px;
+    font-size: 75px;
+    color: rgba(0, 0, 0, 0.5)
 }
 
 div.gameOver.hidden{
+    display: none;
+}
+
+div.gameButton {
+    position: absolute;
+    top: 85%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 5px solid rgba(0, 0, 0, 0.5);
+    font-size: 50px;
+    padding: 10px;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.5);
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+div.gameButton.hidden {
     display: none;
 }
