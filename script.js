@@ -1,3 +1,8 @@
+/*
+    TODO:
+    1. Po przekroczeniu np. 10 punktów dodanie jakiegoś efektu wizualnego
+*/
+
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 const gameButton = document.querySelector('div.gameButton');
@@ -44,7 +49,7 @@ class Bird {
 
 
             if (this.falling === false) {
-                this.timeoutIndex = setTimeout(this.changeDirection, 220)
+                this.timeoutIndex = setTimeout(this.changeDirection, canvas.width < 700 && canvas.height < 700 ? 200 : 220);
             }
         }
 
@@ -95,7 +100,7 @@ class Bird {
         const birdH = (canvasH / 100) * size;
         const x = (canvasW / 100) * 25;
         const y = ((canvasH / 100) * 50) - (birdH / 2);
-        const v = 5;
+        const v = canvas.width < 700 && canvas.height < 700 ? 4 : 5;
 
         const params = {
             x: x,
@@ -155,14 +160,12 @@ class Pillar {
 }
 
 
-// let bird = new Bird(Bird.getParams());
-
 let pillarArray = []; //Array of all pillars 
 let nextPillarOffset = 0; //Distance between following gaps chosen randomly in createPillars function
 
 const createPillars = () => {
 
-    const gapHeight = 20;
+    const gapHeight = canvas.width < 700 && canvas.height < 700 && canvas.width > canvas.height ? 28 : 21;
 
     const nextPillarOffset = Math.floor(Math.random() * (gapHeight * 3) - gapHeight); //Drawing a number between 0 and gapHeight to determinate next gaps position
 
@@ -181,15 +184,12 @@ const createPillars = () => {
     const bottomPillarY = topPillarHeight + (canvas.height / 100) * gapHeight;
 
 
-    pillarArray.push(new Pillar(canvas.width, topPillarY, (canvas.width / 100) * 10, topPillarHeight, bird, 'top')); //Creating top pillar
-    pillarArray.push(new Pillar(canvas.width, bottomPillarY, (canvas.width / 100) * 10, bottomPillarHeight, bird, 'bottom')); //Creating bottom pillar
+    pillarArray.push(new Pillar(canvas.width, topPillarY, Bird.getParams().w * 2, topPillarHeight, bird, 'top')); //Creating top pillar
+    pillarArray.push(new Pillar(canvas.width, bottomPillarY, Bird.getParams().w * 2, bottomPillarHeight, bird, 'bottom')); //Creating bottom pillar
 }
 
 
-/*
-    TODO:
-    1. Przycisk reset
-*/
+
 const writeOnTheCenter = (text) => {
     const fontSize = (canvas.width / 100) * 30;
     c.font = `${fontSize}px Arial`;
